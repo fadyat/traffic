@@ -5,3 +5,4 @@
 .config/values.json
 .config/values-snapshot.json
 .idea
+.config/plot.html

@@ -14,28 +14,7 @@ pub fn get_stored(path: String) -> Result<Vec<RepoView>, Error> {
     };
 }
 
-pub fn merge_and_store(
-    path: String,
-    old_views: Vec<RepoView>,
-    new_views: Vec<RepoView>,
-) -> Result<(), Error> {
-    if old_views.is_empty() {
-        return save(path, new_views);
-    }
-
-    let mut merged_views = old_views.clone();
-    let top_idx = merged_views.iter()
-        .rposition(|view| view.timestamp == new_views[0].timestamp);
-
-    if let Some(idx) = top_idx {
-        merged_views.truncate(idx);
-    }
-
-    merged_views.extend_from_slice(&new_views);
-    return save(path, merged_views);
-}
-
-fn save(path: String, mut val: Vec<RepoView>) -> Result<(), Error> {
+pub fn save(path: String, mut val: Vec<RepoView>) -> Result<(), Error> {
     let storage_file = match File::create(path) {
         Ok(f) => f,
         Err(e) => return Err(Error { message: e.to_string() }),

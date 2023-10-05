@@ -1,11 +1,29 @@
 use crate::config::Config;
-use crate::gh_client::GitHubClient;
-use crate::store::{get_stored, merge_and_store};
+use crate::gh_client::{GitHubClient, RepoView};
+use crate::store::{get_stored, save};
 
 mod gh_client;
 mod config;
 mod error;
 mod store;
+mod plot;
+
+fn merge_views(old: Vec<RepoView>, new: Vec<RepoView>) -> Vec<RepoView> {
+    if old.is_empty() {
+        return new;
+    }
+
+    let mut merged = old.clone();
+    let top_idx = merged.iter()
+        .rposition(|view| view.timestamp == new[0].timestamp);
+
+    if let Some(idx) = top_idx {
+        merged.truncate(idx);
+    }
+
+    merged.extend_from_slice(&new);
+    return merged;
+}
 
 #[tokio::main]
 async fn main() {
@@ -17,9 +35,12 @@ async fn main() {
         .await
         .expect("failed to fetch repository traffic");
 
-    let stored_views = get_stored(c.storage.path.clone())
+    let stored_views = get_stored(c.storage.state_path.clone())
         .expect("failed to retrieve data from storage");
 
-    merge_and_store(c.storage.path.clone(), stored_views, new_views.views)
-        .expect("failed to merge and store the data");
+    let merged_views = merge_views(stored_views, new_views.views);
+    save(c.storage.state_path.clone(), merged_views.clone())
+        .expect("failed to save the data");
+
+    plot::update(c.storage.plot_path, merged_views)
 }

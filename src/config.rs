@@ -31,5 +31,6 @@ pub struct GithubConfig {
 
 #[derive(Debug, Deserialize)]
 pub struct StorageConfig {
-    pub path: String,
+    pub state_path: String,
+    pub plot_path: String,
 }

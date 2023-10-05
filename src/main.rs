@@ -30,17 +30,17 @@ async fn main() {
     let c = Config::new(".config/config.yaml".to_string())
         .expect("failed to initialize config");
 
-    let new_views = GitHubClient::new(c.github.token)
-        .get_repo_views(c.github.owner, c.github.repo)
+    let fetched = GitHubClient::new(c.github.token)
+        .get_repo_views(&c.github.owner, &c.github.repo)
         .await
         .expect("failed to fetch repository traffic");
 
-    let stored_views = get_stored(c.storage.state_path.clone())
+    let stored = get_stored(&c.storage.state_path)
         .expect("failed to retrieve data from storage");
 
-    let merged_views = merge_views(stored_views, new_views.views);
-    save(c.storage.state_path.clone(), merged_views.clone())
+    let merged_views = merge_views(stored, fetched.views);
+    save(&c.storage.state_path, &merged_views)
         .expect("failed to save the data");
 
-    plot::update(c.storage.plot_path, merged_views)
+    plot::update(c.storage.plot_path, &merged_views)
 }

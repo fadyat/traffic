@@ -34,14 +34,14 @@ impl GitHubClient {
     const USER_AGENT: &'static str = "traffic-viewer";
 
     pub fn new(token: String) -> Self {
-        let client = reqwest::Client::new();
+        let client = Client::new();
         return GitHubClient { client, token };
     }
 
     pub async fn get_repo_views(
         self,
-        owner: String,
-        repo: String,
+        owner: &String,
+        repo: &String,
     ) -> Result<RepoViewsResponse, Error> {
         let url = format!("{}/repos/{}/{}/traffic/views", GitHubClient::BASE_URL, owner, repo);
         let resp_res = self.client.get(url)

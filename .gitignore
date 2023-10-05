@@ -1,0 +1,7 @@
+/target
+.config/config.yaml
+.DS_Store
+.env
+.config/values.json
+.config/values-snapshot.json
+.idea

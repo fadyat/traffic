@@ -1,0 +1,7 @@
+github:
+  token: ${GITHUB_ACCESS_TOKEN}
+  owner: ${GITHUB_OWNER}
+  repo: ${GITHUB_REPO}
+
+storage:
+  path: .config/values.json

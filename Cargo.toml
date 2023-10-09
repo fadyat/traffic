@@ -4,9 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+log4rs = { version = "1.2.0" }
 plotly = { version = "0.8.4" }
 reqwest = { version = "0.11.20", features = ["json"] }
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.107", features = [] }
 serde_yaml = { version = "0.9.25" }
 tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
+log = { version = "0.4.20", features = [] }

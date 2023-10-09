@@ -8,10 +8,10 @@ pub fn get_stored(path: &String) -> Result<Vec<RepoView>, Error> {
         Err(_) => return Ok(Vec::new())
     };
 
-    return match serde_json::from_reader(storage_file) {
+    match serde_json::from_reader(storage_file) {
         Ok(v) => Ok(v),
         Err(e) => Err(Error { message: e.to_string() }),
-    };
+    }
 }
 
 pub fn save(path: &String, val: &Vec<RepoView>) -> Result<(), Error> {
@@ -20,8 +20,8 @@ pub fn save(path: &String, val: &Vec<RepoView>) -> Result<(), Error> {
         Err(e) => return Err(Error { message: e.to_string() }),
     };
 
-    return match serde_json::to_writer(storage_file, val) {
+    match serde_json::to_writer(storage_file, val) {
         Ok(_) => Ok(()),
         Err(e) => Err(Error { message: e.to_string() }),
-    };
+    }
 }

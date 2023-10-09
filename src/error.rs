@@ -8,6 +8,6 @@ pub struct Error {
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        return write!(f, "{}", self.message);
+        write!(f, "{}", self.message)
     }
 }

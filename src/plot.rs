@@ -3,7 +3,7 @@ use plotly::layout::Axis;
 use plotly::{Layout, Plot, Scatter};
 use crate::gh_client::RepoView;
 
-pub fn update(path: String, values: &Vec<RepoView>) {
+pub fn update(path: String, values: &[RepoView]) {
     let mut plot = Plot::new();
     let x = values.iter()
         .map(|view| view.timestamp.clone())

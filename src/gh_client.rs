@@ -24,7 +24,7 @@ pub struct RepoView {
 
 impl Display for RepoView {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        return write!(f, "{}", serde_json::to_string(self).unwrap());
+        write!(f, "{}", serde_json::to_string(self).unwrap())
     }
 }
 
@@ -34,8 +34,7 @@ impl GitHubClient {
     const USER_AGENT: &'static str = "traffic-viewer";
 
     pub fn new(token: String) -> Self {
-        let client = Client::new();
-        return GitHubClient { client, token };
+        GitHubClient { client: Client::new(), token }
     }
 
     pub async fn get_repo_views(
@@ -59,9 +58,9 @@ impl GitHubClient {
             return Err(Error { message: format!("HTTP error: {}", resp.status()) });
         }
 
-        return match resp.json::<RepoViewsResponse>().await {
+        match resp.json::<RepoViewsResponse>().await {
             Ok(r) => Ok(r),
             Err(e) => Err(Error { message: e.to_string() }),
-        };
+        }
     }
 }

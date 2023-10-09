@@ -15,10 +15,10 @@ impl Config {
             Err(e) => return Err(Error { message: e.to_string() }),
         };
 
-        return match serde_yaml::from_reader(config_file) {
+        match serde_yaml::from_reader(config_file) {
             Ok(c) => Ok(c),
             Err(e) => Err(Error { message: e.to_string() }),
-        };
+        }
     }
 }
 

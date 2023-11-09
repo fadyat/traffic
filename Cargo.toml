@@ -12,3 +12,6 @@ serde_json = { version = "1.0.107", features = [] }
 serde_yaml = { version = "0.9.25" }
 tokio = { version = "1.0.0", features = ["rt", "rt-multi-thread", "macros"] }
 log = { version = "0.4.20", features = [] }
+ratatui = { version = "0.24.0" }
+crossterm = { version = "0.27.0" }
+chrono = { version = "0.4.31" }

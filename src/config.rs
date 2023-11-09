@@ -1,6 +1,6 @@
-use std::fs::File;
+use anyhow::{anyhow, Result};
 use serde::Deserialize;
-use crate::error::Error;
+use std::fs::File;
 
 #[derive(Debug, Deserialize)]
 pub struct Config {
@@ -9,15 +9,15 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(config_path: String) -> Result<Config, Error> {
+    pub fn new(config_path: String) -> Result<Config> {
         let config_file = match File::open(config_path) {
             Ok(f) => f,
-            Err(e) => return Err(Error { message: e.to_string() }),
+            Err(e) => return Err(anyhow!(e)),
         };
 
         match serde_yaml::from_reader(config_file) {
             Ok(c) => Ok(c),
-            Err(e) => Err(Error { message: e.to_string() }),
+            Err(e) => Err(anyhow!(e)),
         }
     }
 }
@@ -32,5 +32,4 @@ pub struct GithubConfig {
 #[derive(Debug, Deserialize)]
 pub struct StorageConfig {
     pub state_path: String,
-    pub plot_path: String,
 }

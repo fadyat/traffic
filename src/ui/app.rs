@@ -1,9 +1,9 @@
+use crate::api::github::RepoView;
 use std::cmp::max;
-use crate::gh_client::RepoView;
 
 pub struct App {
     traffic: Vec<RepoView>,
-    window_size: usize,
+    _window_size: usize,
     left_bound: usize,
     right_bound: usize,
 }
@@ -15,11 +15,11 @@ pub struct IndexedView {
 
 impl App {
     pub fn new(traffic: Vec<RepoView>) -> Self {
-        let length = traffic.len().clone();
+        let length = traffic.len();
         let window_size = 14;
 
         App {
-            window_size,
+            _window_size: window_size,
             traffic: traffic.clone(),
             right_bound: length,
             left_bound: max(length - window_size, 0),
@@ -29,7 +29,8 @@ impl App {
     pub fn get_window(&self) -> Vec<IndexedView> {
         let slice = &self.traffic[self.left_bound..self.right_bound];
 
-        slice.iter()
+        slice
+            .iter()
             .enumerate()
             .map(|(i, view)| IndexedView {
                 index: i + self.left_bound,

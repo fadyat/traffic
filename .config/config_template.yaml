@@ -5,4 +5,3 @@ github:
 
 storage:
   state_path: .config/values.json
-  plot_path: .config/plot.html

@@ -1,10 +1,10 @@
-use std::fmt::{Display, Formatter};
-use reqwest::Client;
+use anyhow::{anyhow, Result};
+use reqwest::{header, Client as HTTPClient};
 use serde::{Deserialize, Serialize};
-use crate::error::Error;
+use std::fmt::{Display, Formatter};
 
-pub struct GitHubClient {
-    client: Client,
+pub struct Client {
+    client: HTTPClient,
     token: String,
 }
 
@@ -28,39 +28,44 @@ impl Display for RepoView {
     }
 }
 
-
-impl GitHubClient {
+impl Client {
     const BASE_URL: &'static str = "https://api.github.com";
     const USER_AGENT: &'static str = "traffic-viewer";
 
     pub fn new(token: String) -> Self {
-        GitHubClient { client: Client::new(), token }
+        Client {
+            client: HTTPClient::new(),
+            token,
+        }
     }
 
-    pub async fn get_repo_views(
-        self,
-        owner: &String,
-        repo: &String,
-    ) -> Result<RepoViewsResponse, Error> {
-        let url = format!("{}/repos/{}/{}/traffic/views", GitHubClient::BASE_URL, owner, repo);
-        let resp_res = self.client.get(url)
+    pub async fn get_repo_views(self, owner: &String, repo: &String) -> Result<RepoViewsResponse> {
+        let url = format!(
+            "{}/repos/{}/{}/traffic/views",
+            Client::BASE_URL,
+            owner,
+            repo
+        );
+        let resp_res = self
+            .client
+            .get(url)
             .bearer_auth(self.token)
-            .header("User-Agent", GitHubClient::USER_AGENT)
+            .header(header::USER_AGENT, Client::USER_AGENT)
             .send()
             .await;
 
         let resp = match resp_res {
             Ok(r) => r,
-            Err(e) => return Err(Error { message: e.to_string() }),
+            Err(e) => return Err(anyhow!(e)),
         };
 
         if !resp.status().is_success() {
-            return Err(Error { message: format!("HTTP error: {}", resp.status()) });
+            return Err(anyhow!(resp.text().await.unwrap()));
         }
 
         match resp.json::<RepoViewsResponse>().await {
             Ok(r) => Ok(r),
-            Err(e) => Err(Error { message: e.to_string() }),
+            Err(e) => Err(anyhow!(e)),
         }
     }
 }

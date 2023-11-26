@@ -29,8 +29,7 @@ impl App {
     pub fn get_window(&self) -> Vec<IndexedView> {
         let slice = &self.traffic[self.left_bound..self.right_bound];
 
-        slice
-            .iter()
+        slice.iter()
             .enumerate()
             .map(|(i, view)| IndexedView {
                 index: i + self.left_bound,

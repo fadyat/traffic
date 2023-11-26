@@ -1,5 +1,3 @@
-use log::info;
-
 mod api;
 mod cli;
 mod config;
@@ -13,11 +11,7 @@ fn main() {
     let mode = if std::env::args().len() > 1 {
         cli::run_cli()
     } else {
-        info!("\
-            Welcome to the GitHub traffic viewer!\
-            UI is not implemented yet, CLI will be used instead.\
-        ");
-
+        log::set_max_level(log::LevelFilter::Off);
         ui::render_ui()
     };
 

@@ -1,9 +1,11 @@
-use crate::config::Config;
-use crate::store::get_stored;
-use crate::ui::app::App;
+use crate::{
+    ui::app::App,
+    store::get_stored,
+    config::Config,
+    ui::r#type::BuildType,
+};
 use crossterm::{
     event,
-    event::KeyEventKind,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
@@ -11,41 +13,38 @@ use ratatui::{
     backend::CrosstermBackend,
     layout::Alignment,
     style::{Color, Style},
-    widgets::{Axis, GraphType},
-    widgets::{Block, Borders, Chart, Dataset},
-    Frame, Terminal,
+    widgets::{
+        Axis,
+        Block,
+        Borders,
+        Chart,
+        Dataset,
+    },
+    Frame,
+    Terminal,
 };
 use std::io::stdout;
+use std::time::Duration;
+use ratatui::widgets::GraphType;
 
 mod app;
+mod r#type;
 
-fn ui(frame: &mut Frame, app: &App) {
-    let binding = app
-        .get_window()
-        .iter()
-        .map(|view| (view.index as f64, view.view.uniques as f64))
-        .collect::<Vec<(f64, f64)>>();
-
-    let datasets = vec![Dataset::default()
-        .data(binding.as_slice())
-        .graph_type(GraphType::Line)];
-
-    let xmin = app
-        .get_window()
-        .iter()
-        .map(|view| view.index)
-        .min()
-        .unwrap_or(0);
-
-    let xmax = app
-        .get_window()
-        .iter()
-        .map(|view| view.index)
-        .max()
-        .unwrap_or(0);
+fn ui(
+    frame: &mut Frame,
+    app: &App,
+    build_type: &BuildType,
+) {
+    let window = app.get_window();
+    let dataset_data = App::get_dataset(&window, build_type);
 
     frame.render_widget(
-        Chart::new(datasets)
+        Chart::new(vec![
+            Dataset::default()
+                .name(build_type.to_string())
+                .graph_type(GraphType::Line)
+                .data(&dataset_data)
+        ])
             .block(
                 Block::default()
                     .title("Repository traffic")
@@ -55,12 +54,12 @@ fn ui(frame: &mut Frame, app: &App) {
             .x_axis(
                 Axis::default()
                     .style(Style::default().fg(Color::Gray))
-                    .bounds([xmin as f64, xmax as f64]),
+                    .bounds(App::get_xbounds(&window)),
             )
             .y_axis(
                 Axis::default()
                     .style(Style::default().fg(Color::Gray))
-                    .bounds([0.0, 30.0]),
+                    .bounds(App::get_ybounds(&window, build_type)),
             ),
         frame.size(),
     );
@@ -77,14 +76,19 @@ pub fn render_ui() -> Result<(), Box<dyn std::error::Error>> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
-    let app = App::new(stored_traffic);
+    let mut app = App::new(stored_traffic, 30);
+    let mut btype = BuildType::Uniques;
     loop {
-        terminal.draw(|frame| ui(frame, &app))?;
+        terminal.draw(|frame| ui(frame, &app, &btype))?;
 
-        if event::poll(std::time::Duration::from_millis(100))? {
+        if event::poll(Duration::from_millis(100))? {
             if let event::Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press && key.code == event::KeyCode::Char('q') {
-                    break;
+                match key.code {
+                    event::KeyCode::Char('q') => break,
+                    event::KeyCode::Char('s') => btype = btype.toggle(),
+                    event::KeyCode::Left => app.move_window(-1),
+                    event::KeyCode::Right => app.move_window(1),
+                    _ => {}
                 }
             }
         }

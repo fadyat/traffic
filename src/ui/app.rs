@@ -1,9 +1,10 @@
 use crate::api::github::RepoView;
-use std::cmp::max;
+use std::cmp::{max, min};
+use crate::ui::r#type::BuildType;
 
 pub struct App {
     traffic: Vec<RepoView>,
-    _window_size: usize,
+    window_size: usize,
     left_bound: usize,
     right_bound: usize,
 }
@@ -14,15 +15,17 @@ pub struct IndexedView {
 }
 
 impl App {
-    pub fn new(traffic: Vec<RepoView>) -> Self {
+    pub fn new(
+        traffic: Vec<RepoView>,
+        window_size: usize,
+    ) -> Self {
         let length = traffic.len();
-        let window_size = 14;
 
         App {
-            _window_size: window_size,
+            window_size,
             traffic: traffic.clone(),
             right_bound: length,
-            left_bound: max(length - window_size, 0),
+            left_bound: max(length as isize - window_size as isize, 0) as usize,
         }
     }
 
@@ -36,5 +39,59 @@ impl App {
                 view: view.clone(),
             })
             .collect::<Vec<IndexedView>>()
+    }
+
+    pub fn move_window(
+        &mut self, offset: isize,
+    ) {
+        let new_left = max(self.left_bound as isize + offset, 0);
+        let new_right = min(self.right_bound as isize + offset, self.traffic.len() as isize);
+
+        if new_right - new_left != self.window_size as isize {
+            return;
+        }
+
+        self.left_bound = new_left as usize;
+        self.right_bound = new_right as usize;
+    }
+
+    pub fn get_dataset(
+        window: &[IndexedView],
+        gtype: &BuildType,
+    ) -> Vec<(f64, f64)> {
+        window
+            .iter()
+            .map(|view| {
+                let x = view.index as f64;
+                let y = match gtype {
+                    BuildType::Uniques => view.view.uniques as f64,
+                    BuildType::Views => view.view.count as f64,
+                };
+
+                (x, y)
+            })
+            .collect::<Vec<(f64, f64)>>()
+    }
+
+    pub fn get_xbounds(window: &[IndexedView]) -> [f64; 2] {
+        [
+            window[0].index as f64,
+            window[window.len() - 1].index as f64,
+        ]
+    }
+
+    pub fn get_ybounds(
+        window: &[IndexedView],
+        gtype: &BuildType,
+    ) -> [f64; 2] {
+        window.iter().fold([0.0, 0.0], |acc, view| {
+            let [mn, mx] = acc;
+            let y = match gtype {
+                BuildType::Uniques => view.view.uniques as f64,
+                BuildType::Views => view.view.count as f64,
+            };
+
+            [mn.min(y), mx.max(y)]
+        })
     }
 }

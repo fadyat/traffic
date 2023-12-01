@@ -144,6 +144,10 @@ impl App {
             return;
         }
 
+        if self.left_bound as isize - offset < 0 {
+            return;
+        }
+
         self.window_size = new_size as usize;
         self.left_bound = (self.left_bound as isize - offset) as usize;
     }

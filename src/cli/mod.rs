@@ -1,26 +1,11 @@
 use crate::api::github;
 use crate::config::Config;
-use crate::store::{get_stored, save};
-use crate::merger::merge_views;
+use crate::sync::sync;
+use anyhow::Result;
 
-use log::info;
+pub async fn run_cli(c: &Config) -> Result<()> {
+    let gh_client = github::Client::new(c.github.token.clone());
 
-#[tokio::main]
-pub async fn run_cli(
-    c: &Config,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let fetched = github::Client::new(c.github.token.clone())
-        .get_repo_views(&c.github.owner, &c.github.repo)
+    sync(gh_client, &c.github.owner, &c.github.repo, &c.storage.state_path)
         .await
-        .expect("failed to fetch repository traffic");
-
-    let stored = get_stored(&c.storage.state_path)
-        .expect("failed to retrieve data from storage");
-
-    let merged_views = merge_views(stored, fetched.views);
-    info!("{} views fetched", merged_views.len());
-    save(&c.storage.state_path, &merged_views).expect("failed to save the data");
-    info!("new fetched data is merged with the old one");
-
-    Ok(())
 }

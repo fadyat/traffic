@@ -9,6 +9,7 @@ use crossterm::{
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
+use anyhow::Result;
 use ratatui::{
     backend::CrosstermBackend,
     layout::Alignment,
@@ -23,9 +24,13 @@ use ratatui::{
 };
 use std::io::stdout;
 use std::time::Duration;
+use anyhow::anyhow;
 use ratatui::prelude::Stylize;
 use ratatui::text::Span;
 use ratatui::widgets::GraphType;
+use crate::api::github;
+use crate::api::github::RepoView;
+use crate::sync::sync;
 
 mod app;
 mod r#type;
@@ -69,11 +74,21 @@ fn ui(
     );
 }
 
-pub fn render_ui(
-    c: &Config,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let stored_traffic = get_stored(&c.storage.state_path)
-        .expect("failed to retrieve data from storage");
+async fn prepare_ui(c: &Config) -> Result<Vec<RepoView>> {
+    let gh_client = github::Client::new(c.github.token.clone());
+    match sync(gh_client, &c.github.owner, &c.github.repo, &c.storage.state_path).await {
+        Ok(_) => {}
+        Err(e) => return Err(anyhow!(e)),
+    }
+
+    get_stored(&c.storage.state_path)
+}
+
+pub async fn render_ui(c: &Config) -> Result<()> {
+    let stored_traffic = match prepare_ui(c).await {
+        Ok(s) => s,
+        Err(e) => return Err(anyhow!(e)),
+    };
 
     stdout().execute(EnterAlternateScreen)?;
     enable_raw_mode()?;

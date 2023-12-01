@@ -6,11 +6,10 @@ use crate::merger::merge_views;
 use log::info;
 
 #[tokio::main]
-pub async fn run_cli() -> Result<(), Box<dyn std::error::Error>> {
-    let c = Config::new(".config/config.yaml".to_string())
-        .expect("failed to initialize config");
-
-    let fetched = github::Client::new(c.github.token)
+pub async fn run_cli(
+    c: &Config,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let fetched = github::Client::new(c.github.token.clone())
         .get_repo_views(&c.github.owner, &c.github.repo)
         .await
         .expect("failed to fetch repository traffic");

@@ -16,60 +16,64 @@ use ratatui::{
     widgets::{
         Axis,
         Block,
-        Borders,
         Chart,
         Dataset,
     },
-    Frame,
-    Terminal,
+    Frame, Terminal, symbols,
 };
 use std::io::stdout;
 use std::time::Duration;
+use ratatui::prelude::Stylize;
+use ratatui::text::Span;
 use ratatui::widgets::GraphType;
 
 mod app;
 mod r#type;
 
 fn ui(
+    repository: &str,
     frame: &mut Frame,
     app: &App,
     build_type: &BuildType,
 ) {
     let window = app.get_window();
     let dataset_data = App::get_dataset(&window, build_type);
+    let datasets = vec![
+        Dataset::default()
+            .style(Style::default().white())
+            .marker(symbols::Marker::Braille)
+            .graph_type(GraphType::Line)
+            .data(&dataset_data)
+    ];
 
     frame.render_widget(
-        Chart::new(vec![
-            Dataset::default()
-                .name(build_type.to_string())
-                .graph_type(GraphType::Line)
-                .data(&dataset_data)
-        ])
+        Chart::new(datasets)
             .block(
                 Block::default()
-                    .title("Repository traffic")
-                    .borders(Borders::ALL)
+                    .title(format!("{} - {}", repository, build_type))
                     .title_alignment(Alignment::Center),
             )
             .x_axis(
                 Axis::default()
                     .style(Style::default().fg(Color::Gray))
-                    .bounds(App::get_xbounds(&window)),
+                    .bounds(App::get_xbounds(&window))
+                    .labels(App::get_xlabels(&window).iter().cloned().map(Span::from).collect()),
             )
             .y_axis(
                 Axis::default()
                     .style(Style::default().fg(Color::Gray))
-                    .bounds(App::get_ybounds(&window, build_type)),
+                    .bounds(App::get_ybounds(&window, build_type))
+                    .labels(App::get_ylabels(&window, build_type).iter().cloned().map(Span::from).collect()),
             ),
         frame.size(),
     );
 }
 
-pub fn render_ui() -> Result<(), Box<dyn std::error::Error>> {
-    let c = Config::new(".config/config.yaml".to_string()).expect("failed to initialize config");
-
-    let stored_traffic =
-        get_stored(&c.storage.state_path).expect("failed to retrieve data from storage");
+pub fn render_ui(
+    c: &Config,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let stored_traffic = get_stored(&c.storage.state_path)
+        .expect("failed to retrieve data from storage");
 
     stdout().execute(EnterAlternateScreen)?;
     enable_raw_mode()?;
@@ -79,7 +83,9 @@ pub fn render_ui() -> Result<(), Box<dyn std::error::Error>> {
     let mut app = App::new(stored_traffic, 30);
     let mut btype = BuildType::Uniques;
     loop {
-        terminal.draw(|frame| ui(frame, &app, &btype))?;
+        terminal.draw(|frame|
+            ui(&c.github.repo, frame, &app, &btype)
+        )?;
 
         if event::poll(Duration::from_millis(100))? {
             if let event::Event::Key(key) = event::read()? {

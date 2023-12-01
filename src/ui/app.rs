@@ -1,5 +1,6 @@
 use crate::api::github::RepoView;
 use std::cmp::{max, min};
+use chrono::DateTime;
 use crate::ui::r#type::BuildType;
 
 pub struct App {
@@ -93,5 +94,39 @@ impl App {
 
             [mn.min(y), mx.max(y)]
         })
+    }
+
+    pub fn get_xlabels(window: &[IndexedView]) -> Vec<String> {
+        let fun = |view: &IndexedView| {
+            DateTime::parse_from_rfc3339(&view.view.timestamp)
+                .unwrap_or_default()
+                .format("%d-%m")
+                .to_string()
+        };
+
+        let labels_count = 10;
+        let step = window.len() / labels_count;
+        (0..labels_count)
+            .map(|i| {
+                match i {
+                    0 => fun(&window[0]),
+                    _ if i == labels_count - 1 => fun(&window[window.len() - 1]),
+                    _ => fun(&window[i * step]),
+                }
+            })
+            .collect()
+    }
+
+
+    pub fn get_ylabels(
+        window: &[IndexedView],
+        gtype: &BuildType,
+    ) -> Vec<String> {
+        let [mn, mx] = App::get_ybounds(window, gtype);
+        let step = (mx - mn) / 10.0;
+
+        (0..10)
+            .map(|i| format!("{:.0}", mn + step * i as f64))
+            .collect()
     }
 }

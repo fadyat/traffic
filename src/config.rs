@@ -6,6 +6,8 @@ use std::fs::File;
 pub struct Config {
     pub github: GithubConfig,
     pub storage: StorageConfig,
+    #[serde(default)]
+    pub app: AppConfig,
 }
 
 impl Config {
@@ -33,3 +35,20 @@ pub struct GithubConfig {
 pub struct StorageConfig {
     pub state_path: String,
 }
+
+#[derive(Debug, Deserialize)]
+pub struct AppConfig {
+
+    #[serde(default = "default_window_size")]
+    pub window_size: usize,
+}
+
+impl Default for AppConfig {
+    fn default() -> Self {
+        AppConfig {
+            window_size: default_window_size(),
+        }
+    }
+}
+
+fn default_window_size() -> usize { 30 }

@@ -23,7 +23,7 @@ impl App {
         let length = traffic.len();
 
         App {
-            window_size,
+            window_size: min(window_size, length),
             traffic: traffic.clone(),
             right_bound: length,
             left_bound: max(length as isize - window_size as isize, 0) as usize,
@@ -42,9 +42,7 @@ impl App {
             .collect::<Vec<IndexedView>>()
     }
 
-    pub fn move_window(
-        &mut self, offset: isize,
-    ) {
+    pub fn move_window(&mut self, offset: isize) {
         let new_left = max(self.left_bound as isize + offset, 0);
         let new_right = min(self.right_bound as isize + offset, self.traffic.len() as isize);
 
@@ -128,5 +126,25 @@ impl App {
         (0..10)
             .map(|i| format!("{:.0}", mn + step * i as f64))
             .collect()
+    }
+
+    pub fn expand_window(&mut self) {
+        self.change_window_size(1);
+    }
+
+    pub fn shrink_window(&mut self) {
+        self.change_window_size(-1);
+    }
+
+    fn change_window_size(&mut self, offset: isize) {
+        let new_size = self.window_size as isize + offset;
+        let stop_point = 5;
+
+        if new_size < stop_point || new_size > self.traffic.len() as isize {
+            return;
+        }
+
+        self.window_size = new_size as usize;
+        self.left_bound = (self.left_bound as isize - offset) as usize;
     }
 }

@@ -95,7 +95,7 @@ pub async fn render_ui(c: &Config) -> Result<()> {
     let mut terminal = Terminal::new(CrosstermBackend::new(stdout()))?;
     terminal.clear()?;
 
-    let mut app = App::new(stored_traffic, 30);
+    let mut app = App::new(stored_traffic, c.app.window_size);
     let mut btype = BuildType::Uniques;
     loop {
         terminal.draw(|frame|
@@ -109,6 +109,8 @@ pub async fn render_ui(c: &Config) -> Result<()> {
                     event::KeyCode::Char('s') => btype = btype.toggle(),
                     event::KeyCode::Left => app.move_window(-1),
                     event::KeyCode::Right => app.move_window(1),
+                    event::KeyCode::Char('a') => app.expand_window(),
+                    event::KeyCode::Char('d') => app.shrink_window(),
                     _ => {}
                 }
             }
